@@ -1,11 +1,12 @@
 # AGENTS — Matching Service
 
-Complementa `../../AGENTS.md` y `../../../../AGENTS.md`.
+Repositorio autónomo.
 
-Stack obligatorio del servicio: Java + Spring Boot.
-
-Responsabilidades: disponibilidad, cobertura, búsqueda de candidatos, matching y asignación.
-
-Usa Spring for Apache Kafka para la integración Kafka definida por contratos y PostgreSQL/PostGIS para capacidades geoespaciales según el diseño.
-
-No trasladar este servicio a .NET sin una nueva ADR.
+- Stack: Java 25 + Spring Boot 4.1.1.
+- Responsabilidad: disponibilidad, cobertura, candidatos, matching y asignación.
+- Contratos versionados: `contracts/`.
+- Kafka: Spring for Apache Kafka.
+- Persistencia geoespacial: PostgreSQL + PostGIS.
+- No trasladar este servicio a .NET sin una nueva ADR.
+- No acceder directamente a datos propiedad de otros servicios.
+- Preservar `tenantId`, `eventId` y `correlationId`.
