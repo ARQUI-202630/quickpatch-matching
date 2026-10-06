@@ -1,0 +1,7 @@
+target/
+contracts/
+.git/
+.github/
+.githooks/
+graphify-out/
+*.md
