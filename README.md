@@ -40,10 +40,26 @@ Requiere JDK 25 (`.java-version`). Se usa el wrapper de Maven.
 ./mvnw spring-boot:run
 ```
 
-El reporte de cobertura queda en `target/site/jacoco/jacoco.xml` (el CI exige ≥ 80%).
+El reporte de cobertura queda en `target/site/jacoco/jacoco.xml` (el CI exige ≥ 80%). Como en los servicios .NET, mide dominio, aplicación y API; la infraestructura se cubre con las pruebas de integración (Testcontainers con PostgreSQL y Kafka, requieren Docker).
+
+## Base de datos
+
+- Migraciones con Flyway en `src/main/resources/db/migration/`. Las ejecuta `FLYWAY_USER` (el rol `_migrator` en el pipeline).
+- Roles del DD 10.2 en `db/roles.sql`: lo aplica un administrador después de las migraciones. El servicio se conecta como `matching_app` (sin `BYPASSRLS`) y fija `app.current_tenant` en cada transacción.
+- Variables: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `FLYWAY_USER`, `FLYWAY_PASSWORD`.
+
+## Eventos
+
+|Evento|Rol|Efecto|
+|---|---|---|
+|`service-request.created` v1|Consume (grupo `matching-service`)|Registra el `eventId` en `processed_events` e inicia el matching en la misma transacción, bajo el tenant del evento. Un evento repetido no repite el efecto; un mensaje que no cumple el contrato se registra y se descarta; un error de la base se reintenta cada 2 s sin confirmar el offset.|
+
+La búsqueda de candidatos y las ofertas (`matching_attempts`, RN-M1 a RN-M7) quedan detrás del puerto `MatchingStarter`; hoy `PendingMatchingStarter` solo registra la llegada de la solicitud.
+
+Variables: `KAFKA_BOOTSTRAP_SERVERS`. Los logs salen en JSON (ECS) con `correlationId`, `tenantId` y `eventId`.
 
 ## Contenedor
 
 - Imagen: `Dockerfile` en la raíz (multi-stage, usuario sin privilegios).
 - Puerto: `8080`.
-- Probes para k3s: `GET /health/live` y `GET /health/ready` (grupos de salud de Spring Boot Actuator).
+- Probes para k3s: `GET /health/live` y `GET /health/ready` (grupos de salud de Spring Boot Actuator; `ready` incluye la base de datos).
