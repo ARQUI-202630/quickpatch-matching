@@ -4,7 +4,8 @@ Lee:
 
 - README.md
 - AGENTS.md
-- contracts/
+- contracts/api-gateway/openapi/ (REST)
+- contracts/kafka/events/ (eventos)
 
 Stack vigente:
 
@@ -13,5 +14,5 @@ Spring Boot 4.1.1
 
 No generar código .NET.
 No inventar eventos.
-Usar `contracts/events/`.
+Usar `contracts/kafka/events/`.
 No asumir rutas del superproyecto.

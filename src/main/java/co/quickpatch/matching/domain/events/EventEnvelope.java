@@ -4,7 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
- * Sobre común de los eventos de QUICKPATCH (DD 8, {@code quickpatch-contracts/events/}).
+ * Sobre común de los eventos de QUICKPATCH (DD 8, {@code quickpatch-kafka/events/}).
  * {@code eventId} es la clave de idempotencia; {@code tenantId} fija el tenant de la transacción (ADR-005).
  */
 public record EventEnvelope<T>(

@@ -4,7 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
- * {@code data} de {@code service-request.created} v1 ({@code contracts/events/service-request.created.v1.json}).
+ * {@code data} de {@code service-request.created} v1 ({@code contracts/kafka/events/service-request.created.v1.json}).
  * La dirección escrita no viaja en el evento (K12, minimización de datos personales).
  */
 public record ServiceRequestCreated(
