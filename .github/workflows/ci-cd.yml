@@ -1,5 +1,6 @@
-# CI/CD de Matching (Java + Spring Boot). Copiar en el repo como .github/workflows/ci-cd.yml.
-# La lógica vive en quickpatch-infrastructure; aquí solo se decide qué corre en cada rama:
+# CI/CD de Matching (Java + Spring Boot).
+# El CI vive en este archivo (SCRUM-337). El despliegue (imagen, QA y producción) todavía usa
+# los workflows de quickpatch-infrastructure hasta que se traslade (SCRUM-338). Qué corre en cada rama:
 #   PR a develop   → lint y pruebas unitarias
 #   push develop   → además, pruebas de integración
 #   push release/* → además, imagen en GHCR y despliegue en QA (VM2)
@@ -20,10 +21,31 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # CI propio del repositorio (SCRUM-337): compilación, pruebas y cobertura ≥ 80%.
+  # Las pruebas de integración (*IT, Testcontainers) corren en los push a develop y release/*.
   ci:
-    uses: ARQUI-202630/quickpatch-infrastructure/.github/workflows/ci-java.yml@main
-    with:
-      integracion: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
+    name: Compilación, pruebas y cobertura
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      INTEGRACION: ${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Pruebas
+        run: |
+          if [ "$INTEGRACION" = true ]; then ./mvnw -B -ntp verify; else ./mvnw -B -ntp test jacoco:report; fi
+
+      - name: Cobertura mínima
+        run: python3 .github/scripts/cobertura.py jacoco 80 target/site/jacoco/jacoco.xml
 
   imagen:
     needs: ci
