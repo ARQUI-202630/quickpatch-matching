@@ -1,0 +1,81 @@
+# Despliegue de Matching en k3s (namespace quickpatch), igual en QA y producción.
+# Primer despliegue: crear el Secret matching-secretos (deploy/k8s/README.md), reemplazar <vm-datos> y
+# <vm-mensajeria> por las IPs del ambiente y aplicar este archivo con `kubectl apply -f deploy/k8s/matching.yaml`.
+# Después, el pipeline actualiza la imagen con `kubectl set image deployment/matching "*=<imagen>"`.
+# Las migraciones (Flyway) corren al arrancar con el rol matching_migrator.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: matching-config
+  namespace: quickpatch
+  labels: { app: matching }
+data:
+  DB_URL: "jdbc:postgresql://<vm-datos>:5432/db_matching"
+  KAFKA_BOOTSTRAP_SERVERS: "<vm-mensajeria>:9092"
+  # La JVM respeta el límite del contenedor (Documento de Infraestructura, 5.6).
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matching
+  namespace: quickpatch
+  labels: { app: matching }
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels: { app: matching }
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  template:
+    metadata:
+      labels: { app: matching }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        # La imagen declara USER app (por nombre); Kubernetes necesita el UID para verificar que no es root.
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: matching
+          image: ghcr.io/arqui-202630/quickpatch-matching:pendiente
+          ports:
+            - { name: http, containerPort: 8080 }
+          envFrom:
+            - configMapRef: { name: matching-config }
+          env:
+            - name: DB_USER
+              value: matching_app
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: matching-secretos, key: app-password } }
+            - name: FLYWAY_USER
+              value: matching_migrator
+            - name: FLYWAY_PASSWORD
+              valueFrom: { secretKeyRef: { name: matching-secretos, key: migrator-password } }
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          # Guaranteed (request = limit), Documento de Infraestructura 5.6: último candidato a desalojo (AC2-E4).
+          resources:
+            requests: { cpu: "1", memory: 1Gi }
+            limits: { cpu: "1", memory: 1Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: matching
+  namespace: quickpatch
+  labels: { app: matching }
+spec:
+  selector: { app: matching }
+  ports:
+    - { name: http, port: 8080, targetPort: http }

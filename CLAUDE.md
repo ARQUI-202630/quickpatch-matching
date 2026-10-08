@@ -1,8 +1,18 @@
 # Claude Code — Matching Service
 
-Stack vigente: Java + Spring Boot.
+Lee:
 
-Aplica primero las reglas de `apps/backend/CLAUDE.md`.
+- README.md
+- AGENTS.md
+- contracts/api-gateway/openapi/ (REST)
+- contracts/kafka/events/ (eventos)
 
-No generar código .NET dentro de este servicio.
-No inventar eventos; usar `docs/contracts/events/`.
+Stack vigente:
+
+Java 25
+Spring Boot 4.1.1
+
+No generar código .NET.
+No inventar eventos.
+Usar `contracts/kafka/events/`.
+No asumir rutas del superproyecto.
