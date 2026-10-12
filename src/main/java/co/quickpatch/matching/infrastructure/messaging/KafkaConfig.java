@@ -2,6 +2,7 @@ package co.quickpatch.matching.infrastructure.messaging;
 
 import co.quickpatch.matching.application.events.Ports;
 import co.quickpatch.matching.application.events.ServiceRequestCreatedHandler;
+import co.quickpatch.matching.application.events.TechnicianEventsHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.listener.CommonErrorHandler;
@@ -25,5 +26,11 @@ public class KafkaConfig {
     ServiceRequestCreatedHandler serviceRequestCreatedHandler(Ports.TenantTransaction transaction,
             Ports.ProcessedEventStore processedEvents, Ports.MatchingStarter matching) {
         return new ServiceRequestCreatedHandler(transaction, processedEvents, matching);
+    }
+
+    @Bean
+    TechnicianEventsHandler technicianEventsHandler(Ports.TenantTransaction transaction,
+            Ports.ProcessedEventStore processedEvents, Ports.TechnicianProjection projection) {
+        return new TechnicianEventsHandler(transaction, processedEvents, projection);
     }
 }
