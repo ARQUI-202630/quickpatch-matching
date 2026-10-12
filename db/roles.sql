@@ -13,3 +13,6 @@ GRANT USAGE ON SCHEMA public TO matching_app;
 
 -- Rol del servicio: todo bajo RLS. processed_events solo admite registrar y consultar.
 GRANT SELECT, INSERT ON processed_events TO matching_app;
+
+-- Proyección del técnico (DD 5.6, P-01): el consumidor de technician.* la crea y actualiza bajo RLS.
+GRANT SELECT, INSERT, UPDATE ON technician_availability TO matching_app;

@@ -53,6 +53,10 @@ El reporte de cobertura queda en `target/site/jacoco/jacoco.xml` (el CI exige �
 |Evento|Rol|Efecto|
 |---|---|---|
 |`service-request.created` v1|Consume (grupo `matching-service`)|Registra el `eventId` en `processed_events` e inicia el matching en la misma transacción, bajo el tenant del evento. Un evento repetido no repite el efecto; un mensaje que no cumple el contrato se registra y se descarta; un error de la base se reintenta cada 2 s sin confirmar el offset.|
+|`technician.registered` v1|Consume (grupo `matching-service`)|Crea la fila del técnico en `technician_availability` (DD 5.6, P-01) en `no_disponible`, con su especialidad y su estado de verificación.|
+|`technician.verification-changed` v1|Consume (grupo `matching-service`)|Copia el estado de verificación nuevo (aprobado, rechazado, suspendido) sin tocar la disponibilidad; si el registro aún no llegó, crea la fila. Solo los `aprobado` serán candidatos (RN-TP1, RN-TP2).|
+
+Los eventos `technician.*` se aplican una vez por `eventId` y por versión: `projection_updated_at` guarda el `data.updatedAt` del último aplicado y un evento más viejo se descarta (ADR-017), así que el orden de llegada entre los dos topics no deja la copia atrás.
 
 La búsqueda de candidatos y las ofertas (`matching_attempts`, RN-M1 a RN-M7) quedan detrás del puerto `MatchingStarter`; hoy `PendingMatchingStarter` solo registra la llegada de la solicitud.
 
