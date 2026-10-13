@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -30,9 +31,11 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * Valida el JWT RS256 que emite Identity (ADR-018) con su llave pública: firma, emisor, audiencia y vigencia con
  * 30 s de tolerancia, igual que los servicios .NET. El rol sale del claim {@code role}. Sin llave configurada
- * ningún token es válido (falla cerrado). {@code /v1/localities} y los probes no requieren token.
+ * ningún token es válido (falla cerrado). {@code /v1/localities} y los probes no requieren token. Solo aplica con
+ * servidor web: los contextos sin web (consumidores de Kafka en pruebas) no la cargan.
  */
 @Configuration
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class SecurityConfig {
 
     public static final String TECNICO = "tecnico";
