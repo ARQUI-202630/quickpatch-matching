@@ -15,6 +15,12 @@ data:
   # JWT de Identity (ADR-018); la llave pública va en el Secret (jwt-public-key).
   JWT_ISSUER: "quickpatch-identity"
   JWT_AUDIENCE: "quickpatch"
+  # Matching (DD 7.5): la oferta vence a los 3 minutos (RN-M8) y el barrido de solicitudes en espera (RN-M10) corre
+  # cada minuto. Roles NOLOGIN que el servicio adopta con SET LOCAL ROLE (db/roles.sql, DD 10.2).
+  MATCHING_OFFER_TTL: "3m"
+  MATCHING_SWEEP_INTERVAL: "PT1M"
+  MATCHING_SCHEDULER_ROLE: "matching_scheduler"
+  OUTBOX_PUBLISHER_ROLE: "matching_outbox"
   # La JVM respeta el límite del contenedor (Documento de Infraestructura, 5.6).
   JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=75"
 ---

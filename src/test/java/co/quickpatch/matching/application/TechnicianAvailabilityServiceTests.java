@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import co.quickpatch.matching.application.events.Ports;
 import co.quickpatch.matching.application.technicians.TechnicianAvailabilityService;
 import co.quickpatch.matching.application.technicians.TechnicianPorts;
+import co.quickpatch.matching.domain.matching.Matching.ResumeTrigger;
 import co.quickpatch.matching.domain.technicians.Technicians.Availability;
 import co.quickpatch.matching.domain.technicians.Technicians.InvalidTransitionException;
 import co.quickpatch.matching.domain.technicians.Technicians.Locality;
@@ -32,6 +33,7 @@ class TechnicianAvailabilityServiceTests {
     private final Map<UUID, Availability> disponibilidad = new HashMap<>();
     private final Map<UUID, List<String>> cobertura = new HashMap<>();
     private final List<UUID> reintentos = new ArrayList<>();
+    private final List<ResumeTrigger> disparadores = new ArrayList<>();
     private final List<Locality> localidades = IntStream.rangeClosed(1, 20)
             .mapToObj(i -> new Locality("%02d".formatted(i), "Localidad " + i)).toList();
 
@@ -77,7 +79,10 @@ class TechnicianAvailabilityServiceTests {
 
     private TechnicianAvailabilityService service() {
         return new TechnicianAvailabilityService(transaccion, store, zonas, () -> localidades,
-                (tenantId, technicianId) -> reintentos.add(technicianId));
+                (tenantId, technicianId, trigger) -> {
+                    reintentos.add(technicianId);
+                    disparadores.add(trigger);
+                });
     }
 
     private void conEstado(String status) {
@@ -111,6 +116,7 @@ class TechnicianAvailabilityServiceTests {
         assertThat(nueva.status()).isEqualTo("disponible");
         assertThat(nueva.updatedAt()).isAfter(T0);
         assertThat(reintentos).containsExactly(tecnico);
+        assertThat(disparadores).containsExactly(ResumeTrigger.AVAILABILITY);
     }
 
     @Test
@@ -160,6 +166,7 @@ class TechnicianAvailabilityServiceTests {
         assertThat(resultado.localities()).extracting(Locality::code).containsExactly("02", "12", "13");
         assertThat(service().getCoverage(tenant, tecnico).localities()).hasSize(3);
         assertThat(reintentos).containsExactly(tecnico);
+        assertThat(disparadores).containsExactly(ResumeTrigger.COVERAGE);
     }
 
     @Test

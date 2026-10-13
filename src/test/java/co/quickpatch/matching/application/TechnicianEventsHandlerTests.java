@@ -10,6 +10,7 @@ import co.quickpatch.matching.domain.events.EventEnvelope;
 import co.quickpatch.matching.domain.events.InvalidEventException;
 import co.quickpatch.matching.domain.events.TechnicianRegistered;
 import co.quickpatch.matching.domain.events.TechnicianVerificationChanged;
+import co.quickpatch.matching.domain.matching.Matching.ResumeTrigger;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +32,7 @@ class TechnicianEventsHandlerTests {
     private final List<UUID> tenantsUsados = new ArrayList<>();
     private final Set<UUID> registrados = new HashSet<>();
     private final Map<UUID, Ports.TechnicianSnapshot> proyeccion = new HashMap<>();
+    private final List<String> reintentos = new ArrayList<>();
 
     private final Ports.TenantTransaction transaccion = new Ports.TenantTransaction() {
         @Override
@@ -51,7 +53,8 @@ class TechnicianEventsHandlerTests {
     };
 
     private TechnicianEventsHandler handler() {
-        return new TechnicianEventsHandler(transaccion, (eventId, tenantId, type) -> registrados.add(eventId), proyectar);
+        return new TechnicianEventsHandler(transaccion, (eventId, tenantId, type) -> registrados.add(eventId), proyectar,
+                (tenantId, technicianId, trigger) -> reintentos.add(tenantId + "/" + technicianId + "/" + trigger));
     }
 
     private <T> EventEnvelope<T> sobre(String tipo, T data) {
@@ -88,6 +91,26 @@ class TechnicianEventsHandlerTests {
 
         assertThat(resultado).isEqualTo(Outcome.APPLIED);
         assertThat(proyeccion.get(tecnico).verificationStatus()).isEqualTo("suspendido");
+        assertThat(reintentos).containsExactly(tenant + "/" + tecnico + "/" + ResumeTrigger.APPROVAL);
+    }
+
+    @Test
+    void aprobacion_ReintentaLasSolicitudesEnEsperaYLasDemasNo() {
+        handler().handleRegistered(registro(T0));
+        assertThat(reintentos).isEmpty();
+
+        handler().handleVerificationChanged(cambio("pendiente", "aprobado", T0.plusHours(1)));
+
+        assertThat(reintentos).containsExactly(tenant + "/" + tecnico + "/" + ResumeTrigger.APPROVAL);
+    }
+
+    @Test
+    void aprobacionQueLlegaTarde_NoReintenta() {
+        handler().handleVerificationChanged(cambio("aprobado", "suspendido", T0.plusHours(2)));
+
+        assertThat(handler().handleVerificationChanged(cambio("pendiente", "aprobado", T0.plusHours(1))))
+                .isEqualTo(Outcome.STALE);
+        assertThat(reintentos).isEmpty();
     }
 
     @Test
