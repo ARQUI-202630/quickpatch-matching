@@ -3,8 +3,12 @@ package co.quickpatch.matching.infrastructure.messaging;
 import co.quickpatch.matching.application.events.Ports;
 import co.quickpatch.matching.application.events.ServiceRequestCreatedHandler;
 import co.quickpatch.matching.application.events.TechnicianEventsHandler;
+import co.quickpatch.matching.application.matching.MatchingEngine;
+import co.quickpatch.matching.application.matching.MatchingPorts;
 import co.quickpatch.matching.application.technicians.TechnicianAvailabilityService;
 import co.quickpatch.matching.application.technicians.TechnicianPorts;
+import java.time.Duration;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.listener.CommonErrorHandler;
@@ -24,6 +28,15 @@ public class KafkaConfig {
         return new DefaultErrorHandler(new FixedBackOff(2000L, FixedBackOff.UNLIMITED_ATTEMPTS));
     }
 
+    /** Motor de matching (RN-M1 a RN-M10); la oferta vence en {@code MATCHING_OFFER_TTL} (RN-M8, 3 minutos). */
+    @Bean
+    MatchingEngine matchingEngine(MatchingPorts.RequestStore requests, MatchingPorts.CandidateSearch candidates,
+            MatchingPorts.AttemptStore attempts, MatchingPorts.Outbox outbox,
+            MatchingPorts.CorrelationContext correlation,
+            @Value("${quickpatch.matching.offer-ttl:3m}") Duration offerTtl) {
+        return new MatchingEngine(requests, candidates, attempts, outbox, correlation, offerTtl);
+    }
+
     @Bean
     ServiceRequestCreatedHandler serviceRequestCreatedHandler(Ports.TenantTransaction transaction,
             Ports.ProcessedEventStore processedEvents, Ports.MatchingStarter matching) {
@@ -32,8 +45,9 @@ public class KafkaConfig {
 
     @Bean
     TechnicianEventsHandler technicianEventsHandler(Ports.TenantTransaction transaction,
-            Ports.ProcessedEventStore processedEvents, Ports.TechnicianProjection projection) {
-        return new TechnicianEventsHandler(transaction, processedEvents, projection);
+            Ports.ProcessedEventStore processedEvents, Ports.TechnicianProjection projection,
+            TechnicianPorts.SearchResumer resumer) {
+        return new TechnicianEventsHandler(transaction, processedEvents, projection, resumer);
     }
 
     @Bean

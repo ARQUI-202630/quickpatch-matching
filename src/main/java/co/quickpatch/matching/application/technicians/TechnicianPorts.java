@@ -1,5 +1,6 @@
 package co.quickpatch.matching.application.technicians;
 
+import co.quickpatch.matching.domain.matching.Matching.ResumeTrigger;
 import co.quickpatch.matching.domain.technicians.Technicians.Availability;
 import co.quickpatch.matching.domain.technicians.Technicians.Locality;
 import java.util.List;
@@ -40,9 +41,9 @@ public final class TechnicianPorts {
 
     /**
      * Reintento de las solicitudes en espera cuando un técnico puede volver a ser candidato (RN-M10): pasó a
-     * {@code disponible} o cambió su cobertura. Se ejecuta dentro de la transacción del cambio.
+     * {@code disponible}, cambió su cobertura o fue aprobado. Se ejecuta dentro de la transacción del cambio.
      */
     public interface SearchResumer {
-        void technicianMayBeCandidate(UUID tenantId, UUID technicianId);
+        void technicianMayBeCandidate(UUID tenantId, UUID technicianId, ResumeTrigger trigger);
     }
 }

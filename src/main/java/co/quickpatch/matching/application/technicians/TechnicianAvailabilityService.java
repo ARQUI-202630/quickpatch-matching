@@ -1,6 +1,7 @@
 package co.quickpatch.matching.application.technicians;
 
 import co.quickpatch.matching.application.events.Ports;
+import co.quickpatch.matching.domain.matching.Matching.ResumeTrigger;
 import co.quickpatch.matching.domain.technicians.Technicians;
 import co.quickpatch.matching.domain.technicians.Technicians.Availability;
 import co.quickpatch.matching.domain.technicians.Technicians.Coverage;
@@ -62,7 +63,7 @@ public class TechnicianAvailabilityService {
             }
             var updated = availability.update(technicianId, status);
             if (Technicians.DISPONIBLE.equals(status)) {
-                resumer.technicianMayBeCandidate(tenantId, technicianId);
+                resumer.technicianMayBeCandidate(tenantId, technicianId, ResumeTrigger.AVAILABILITY);
             }
             return updated;
         });
@@ -84,7 +85,7 @@ public class TechnicianAvailabilityService {
         return transaction.execute(tenantId, () -> {
             availability.findForUpdate(technicianId).orElseThrow(TechnicianNotFoundException::new);
             coverage.replace(tenantId, technicianId, codes);
-            resumer.technicianMayBeCandidate(tenantId, technicianId);
+            resumer.technicianMayBeCandidate(tenantId, technicianId, ResumeTrigger.COVERAGE);
             return new Coverage(coverage.list(technicianId));
         });
     }
