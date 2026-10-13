@@ -40,11 +40,28 @@ Requiere JDK 25 (`.java-version`). Se usa el wrapper de Maven.
 ./mvnw spring-boot:run
 ```
 
-El reporte de cobertura queda en `target/site/jacoco/jacoco.xml` (el CI exige ≥ 80%). Como en los servicios .NET, mide dominio, aplicación y API; la infraestructura se cubre con las pruebas de integración (Testcontainers con PostgreSQL y Kafka, requieren Docker).
+El reporte de cobertura queda en `target/site/jacoco/jacoco.xml` (el CI exige ≥ 80%). Como en los servicios .NET, mide dominio, aplicación y API; la infraestructura se cubre con las pruebas de integración (Testcontainers con PostGIS `postgis/postgis:16-3.4`, la misma imagen de producción, y Kafka; requieren Docker).
+
+## Endpoints
+
+Contrato `matching.v1.yaml` 1.0.0 (`contracts/api-gateway`, v0.5.0).
+
+|Endpoint|Quién|Qué hace|
+|---|---|---|
+|`GET /v1/localities`|Público|Las 20 localidades de Bogotá ordenadas por código, sin polígono (DD 5.18).|
+|`GET /v1/technicians/me/availability`|`tecnico`|Disponibilidad actual; `404` si Matching aún no procesó su `technician.registered`.|
+|`PUT /v1/technicians/me/availability`|`tecnico`|Cambia entre `disponible` y `no_disponible`; `409 transicion-invalida` si está `ocupado` (RN-M6). Repetir el estado no es error.|
+|`GET /v1/technicians/me/coverage`|`tecnico`|Localidades que cubre; lista vacía si no ha elegido.|
+|`PUT /v1/technicians/me/coverage`|`tecnico`|Reemplaza la cobertura en una transacción y copia el polígono de cada localidad (DD 5.7). Lista vacía, repetidos o códigos que no existen: `400 validacion`.|
+
+El técnico y el tenant salen de los claims `sub` y `tenant_id` del JWT RS256 de Identity (ADR-018), que Matching valida con la llave pública (`JWT_PUBLIC_KEY_PEM`), el emisor (`JWT_ISSUER`) y la audiencia (`JWT_AUDIENCE`). Sin llave, todo endpoint con token responde `401`. Los errores son `application/problem+json` con `correlationId` (`X-Correlation-Id`).
+
+Pasar a `disponible` o cambiar la cobertura llama al puerto `SearchResumer` (RN-M10); hoy `PendingSearchResumer` solo lo registra, hasta que exista el reintento de solicitudes en espera (SCRUM-76).
 
 ## Base de datos
 
 - Migraciones con Flyway en `src/main/resources/db/migration/`. Las ejecuta `FLYWAY_USER` (el rol `_migrator` en el pipeline).
+- `localities` trae las 20 localidades de la capa oficial "Localidad" de la Secretaría Distrital de Planeación (Mapa de Referencia IDECA, EPSG 4326), generalizadas a unos 22 m (migración `V3`). Requiere PostGIS, que ya existe en `db_matching`.
 - Roles del DD 10.2 en `db/roles.sql`: lo aplica un administrador después de las migraciones. El servicio se conecta como `matching_app` (sin `BYPASSRLS`) y fija `app.current_tenant` en cada transacción.
 - Variables: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `FLYWAY_USER`, `FLYWAY_PASSWORD`.
 

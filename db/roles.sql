@@ -16,3 +16,7 @@ GRANT SELECT, INSERT ON processed_events TO matching_app;
 
 -- Proyección del técnico (DD 5.6, P-01): el consumidor de technician.* la crea y actualiza bajo RLS.
 GRANT SELECT, INSERT, UPDATE ON technician_availability TO matching_app;
+
+-- Cobertura del técnico (DD 5.7, P-04): catálogo de localidades de solo lectura; el servicio reemplaza las zonas.
+GRANT SELECT ON localities TO matching_app;
+GRANT SELECT, INSERT, DELETE ON coverage_zones TO matching_app;
