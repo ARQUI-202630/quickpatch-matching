@@ -163,6 +163,20 @@ class TechniciansApiIT {
     }
 
     @Test
+    void rls_HabilitadoYForzadoEnCadaTablaConTenant() throws Exception {
+        // DD 10.1: toda tabla con tenant_id tiene RLS habilitado y forzado.
+        assertThat(admin("""
+                SELECT coalesce(string_agg(c.relname, ', ' ORDER BY c.relname), '')
+                FROM pg_class c
+                JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = 'public'
+                WHERE c.relkind = 'r'
+                  AND EXISTS (SELECT 1 FROM pg_attribute a
+                              WHERE a.attrelid = c.oid AND a.attname = 'tenant_id' AND NOT a.attisdropped)
+                  AND NOT (c.relrowsecurity AND c.relforcerowsecurity)
+                """)).isEmpty();
+    }
+
+    @Test
     void rls_ElRolDelServicioNoVeZonasDeOtroTenant() throws Exception {
         var tenant = UUID.randomUUID();
         var tecnico = UUID.randomUUID();
