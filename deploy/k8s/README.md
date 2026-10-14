@@ -1,6 +1,6 @@
 # Despliegue de Matching en k3s
 
-`matching.yaml` crea el ConfigMap, el Deployment, el Service y el Ingress (`/v1/localities` y `/v1/technicians/me`) en el namespace `quickpatch`. Consume de Kafka `service-request.created` y los eventos `technician.*`, y publica `matching.offer-created`, `matching.no-technician-available` y `matching.search-resumed` (los topics deben existir; los crea `topics.yaml` de `quickpatch-kafka`). Antes de desplegar esta versión hay que volver a aplicar `db/roles.sql` (`aplicar-roles-db.yml`), que crea `matching_outbox` y `matching_scheduler`: sin ellos el publicador del Outbox y el barrido fallan y registran el error, aunque el resto del servicio funciona. Flyway aplica las migraciones al arrancar con el rol `matching_migrator`.
+`matching.yaml` crea el ConfigMap, el Deployment, el Service y el Ingress (`/v1/localities`, `/v1/matching` y `/v1/technicians/me`) en el namespace `quickpatch`. Consume de Kafka `service-request.created` y los eventos `technician.*`, y publica `matching.offer-created`, `matching.no-technician-available` y `matching.search-resumed` (los topics deben existir; los crea `topics.yaml` de `quickpatch-kafka`). Antes de desplegar esta versión hay que volver a aplicar `db/roles.sql` (`aplicar-roles-db.yml`), que crea `matching_outbox` y `matching_scheduler`: sin ellos el publicador del Outbox y el barrido fallan y registran el error, aunque el resto del servicio funciona. Flyway aplica las migraciones al arrancar con el rol `matching_migrator`.
 
 ## Secreto `matching-secretos`
 

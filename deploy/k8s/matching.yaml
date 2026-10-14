@@ -104,4 +104,5 @@ spec:
     - http:
         paths:
           - { path: /v1/localities, pathType: Prefix, backend: { service: { name: matching, port: { name: http } } } }
+          - { path: /v1/matching, pathType: Prefix, backend: { service: { name: matching, port: { name: http } } } }
           - { path: /v1/technicians/me, pathType: Prefix, backend: { service: { name: matching, port: { name: http } } } }
