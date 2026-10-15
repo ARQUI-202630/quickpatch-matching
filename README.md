@@ -92,10 +92,12 @@ Los eventos publicados se guardan en `outbox_events` en la misma transacción qu
 4. **Oferta:** al primer candidato le registra una oferta `pendiente` que vence en `MATCHING_OFFER_TTL` (3 minutos, RN-M8) y publica `matching.offer-created`. Si otra transacción tomó al técnico en paralelo, el índice único lo impide y prueba el siguiente.
 5. **Sin candidatos:** la solicitud pasa a `en_espera` y se publica `matching.no-technician-available`, sin relajar el criterio (RN-M4, AC9-E4).
 6. **Reintento (RN-M10):** cuando un técnico pasa a `disponible`, cambia su cobertura o es aprobado, la solicitud en espera más antigua que puede atender vuelve a `buscando` con `matching.search-resumed` y se ofrece de nuevo, en la misma transacción del cambio. Cada `MATCHING_SWEEP_INTERVAL` (1 minuto) un barrido de respaldo reanuda las que ya tienen candidato.
+7. **Respuesta del técnico (SCRUM-79):** `GET /v1/matching/offers` lista su oferta pendiente con la localidad y la distancia, sin la dirección (RN-SR13). Al aceptar, en una sola transacción la oferta queda `aceptado`, el técnico `ocupado` (RN-M6), la solicitud `asignado` y se publica `matching.technician-assigned`. Al rechazar, la solicitud pasa al siguiente candidato (RN-M3) o a `en_espera`. Una oferta inexistente, ajena, respondida o vencida responde `409 oferta-no-disponible`; un técnico que dejó de estar disponible, `409 tecnico-no-disponible`.
+8. **Vencimiento (RN-M8):** cada `MATCHING_EXPIRY_INTERVAL` (15 segundos) las ofertas pendientes vencidas pasan a `expirado` y la solicitud se ofrece al siguiente candidato. Los tenants se buscan con `matching_scheduler` y cada cambio se aplica como `matching_app` bajo RLS.
 
 `MatchingEngine.offerNext` es el paso que sigue a un rechazo o a un vencimiento (RN-M3). Lo usan la aceptación y el rechazo de ofertas y su vencimiento (SCRUM-79).
 
-Variables: `KAFKA_BOOTSTRAP_SERVERS`, `MATCHING_OFFER_TTL` (`3m`), `MATCHING_SWEEP_INTERVAL` (`PT1M`), `OUTBOX_PUBLISHER_ROLE` (`matching_outbox`) y `MATCHING_SCHEDULER_ROLE` (`matching_scheduler`); los roles vacíos solo sirven en desarrollo local, con un usuario que ya ve todas las filas. Los logs salen en JSON (ECS) con `correlationId`, `tenantId` y `eventId`.
+Variables: `KAFKA_BOOTSTRAP_SERVERS`, `MATCHING_OFFER_TTL` (`3m`), `MATCHING_SWEEP_INTERVAL` (`PT1M`), `MATCHING_EXPIRY_INTERVAL` (`PT15S`), `OUTBOX_PUBLISHER_ROLE` (`matching_outbox`) y `MATCHING_SCHEDULER_ROLE` (`matching_scheduler`); los roles vacíos solo sirven en desarrollo local, con un usuario que ya ve todas las filas. Los logs salen en JSON (ECS) con `correlationId`, `tenantId` y `eventId`.
 
 ## Contenedor
 

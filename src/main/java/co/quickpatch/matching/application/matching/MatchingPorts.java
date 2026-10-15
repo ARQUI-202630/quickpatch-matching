@@ -3,6 +3,9 @@ package co.quickpatch.matching.application.matching;
 import co.quickpatch.matching.domain.matching.Matching.Candidate;
 import co.quickpatch.matching.domain.matching.Matching.MatchingRequest;
 import co.quickpatch.matching.domain.matching.Matching.Offer;
+import co.quickpatch.matching.domain.matching.Matching.OfferToAnswer;
+import co.quickpatch.matching.domain.matching.Matching.PendingOffer;
+import java.time.OffsetDateTime;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -57,6 +60,27 @@ public final class MatchingPorts {
 
         /** Ofertas hechas para la solicitud, en cualquier estado. */
         int count(UUID serviceRequestId);
+    }
+
+    /** Respuesta y vencimiento de las ofertas (RF-10, RN-M2, RN-M3, RN-M8; SCRUM-79). */
+    public interface OfferStore {
+        /** Ofertas pendientes y vigentes del técnico, de la más reciente a la más antigua (RN-M2). */
+        List<PendingOffer> pendingFor(UUID technicianId, int offset, int limit);
+
+        /** Total de ofertas pendientes y vigentes del técnico. */
+        int countPendingFor(UUID technicianId);
+
+        /** Busca y bloquea la oferta ({@code FOR UPDATE}) hasta el fin de la transacción. */
+        Optional<OfferToAnswer> findOfferForUpdate(UUID attemptId);
+
+        /** Fija la respuesta y {@code responded_at = now()}; devuelve el momento de la respuesta. */
+        OffsetDateTime respond(UUID attemptId, String response);
+
+        /**
+         * Ofertas pendientes ya vencidas, bloqueadas, hasta {@code limit} (RN-M8). Salta las que otra transacción
+         * tiene bloqueadas, por ejemplo un técnico que está aceptando en ese momento.
+         */
+        List<OfferToAnswer> expiredForUpdate(int limit);
     }
 
     /** Transactional Outbox (ADR-007, DD 5.15): el evento se guarda en la transacción del cambio. */

@@ -5,6 +5,7 @@ import co.quickpatch.matching.application.events.ServiceRequestCreatedHandler;
 import co.quickpatch.matching.application.events.TechnicianEventsHandler;
 import co.quickpatch.matching.application.matching.MatchingEngine;
 import co.quickpatch.matching.application.matching.MatchingPorts;
+import co.quickpatch.matching.application.matching.OfferService;
 import co.quickpatch.matching.application.technicians.TechnicianAvailabilityService;
 import co.quickpatch.matching.application.technicians.TechnicianPorts;
 import java.time.Duration;
@@ -35,6 +36,14 @@ public class KafkaConfig {
             MatchingPorts.CorrelationContext correlation,
             @Value("${quickpatch.matching.offer-ttl:3m}") Duration offerTtl) {
         return new MatchingEngine(requests, candidates, attempts, outbox, correlation, offerTtl);
+    }
+
+    /** Ofertas del técnico: listar, aceptar, rechazar y vencer (RF-10, RN-M2 a RN-M8; SCRUM-79). */
+    @Bean
+    OfferService offerService(Ports.TenantTransaction transaction, MatchingPorts.OfferStore offers,
+            MatchingPorts.RequestStore requests, TechnicianPorts.AvailabilityStore availability,
+            MatchingPorts.Outbox outbox, MatchingPorts.CorrelationContext correlation, MatchingEngine engine) {
+        return new OfferService(transaction, offers, requests, availability, outbox, correlation, engine);
     }
 
     @Bean

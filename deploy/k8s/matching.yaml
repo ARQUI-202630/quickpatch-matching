@@ -19,6 +19,7 @@ data:
   # cada minuto. Roles NOLOGIN que el servicio adopta con SET LOCAL ROLE (db/roles.sql, DD 10.2).
   MATCHING_OFFER_TTL: "3m"
   MATCHING_SWEEP_INTERVAL: "PT1M"
+  MATCHING_EXPIRY_INTERVAL: "PT15S"
   MATCHING_SCHEDULER_ROLE: "matching_scheduler"
   OUTBOX_PUBLISHER_ROLE: "matching_outbox"
   # La JVM respeta el límite del contenedor (Documento de Infraestructura, 5.6).

@@ -72,7 +72,7 @@ class MatchingEngineTests {
         public void updateStatus(UUID serviceRequestId, String status) {
             var r = solicitudes.get(serviceRequestId);
             solicitudes.put(serviceRequestId, new MatchingRequest(r.serviceRequestId(), r.tenantId(), r.clientId(),
-                    r.categoryId(), r.latitude(), r.longitude(), status, r.createdAt()));
+                    r.categoryId(), r.latitude(), r.longitude(), status, r.createdAt(), r.description()));
         }
 
         @Override
@@ -141,7 +141,7 @@ class MatchingEngineTests {
 
     private void enEspera(UUID solicitud, OffsetDateTime createdAt) {
         solicitudes.put(solicitud, new MatchingRequest(solicitud, tenant, cliente, UUID.randomUUID(), 4.65, -74.08,
-                "en_espera", createdAt));
+                "en_espera", createdAt, "Fuga de agua en la cocina"));
     }
 
     @Test

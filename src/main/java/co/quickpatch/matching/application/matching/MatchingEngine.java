@@ -63,7 +63,7 @@ public class MatchingEngine implements Ports.MatchingStarter, TechnicianPorts.Se
         var data = event.data();
         var request = new MatchingRequest(data.serviceRequestId(), event.tenantId(), data.clientId(),
                 data.categoryId(), data.location().latitude(), data.location().longitude(),
-                RequestStatus.SEARCHING, data.createdAt());
+                RequestStatus.SEARCHING, data.createdAt(), data.description());
         if (requests.create(request)) {
             offerNext(data.serviceRequestId(), event.correlationId());
         }
