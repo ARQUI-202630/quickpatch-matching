@@ -55,6 +55,7 @@ public class SecurityConfig {
                         .requestMatchers("/health/**", "/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v1/localities").permitAll()
                         .requestMatchers("/v1/technicians/me/**").hasRole(TECNICO)
+                        .requestMatchers("/v1/matching/offers", "/v1/matching/offers/**").hasRole(TECNICO)
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(resource -> resource
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(authentication))

@@ -21,6 +21,8 @@ public final class Problems {
     public static final URI FORBIDDEN = URI.create(BASE + "no-autorizado");
     public static final URI NOT_FOUND = URI.create(BASE + "no-encontrado");
     public static final URI INVALID_TRANSITION = URI.create(BASE + "transicion-invalida");
+    public static final URI OFFER_NOT_AVAILABLE = URI.create(BASE + "oferta-no-disponible");
+    public static final URI TECHNICIAN_NOT_AVAILABLE = URI.create(BASE + "tecnico-no-disponible");
 
     private Problems() {
     }

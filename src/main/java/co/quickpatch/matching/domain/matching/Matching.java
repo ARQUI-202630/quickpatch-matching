@@ -30,7 +30,8 @@ public final class Matching {
             double latitude,
             double longitude,
             String status,
-            OffsetDateTime createdAt) {
+            OffsetDateTime createdAt,
+            String description) {
     }
 
     /** Técnico que cumple RN-M9 para una solicitud, con la distancia que lo ordena. */
@@ -39,6 +40,47 @@ public final class Matching {
 
     /** Oferta registrada en {@code matching_attempts} con respuesta {@code pendiente}. */
     public record Offer(UUID attemptId, UUID serviceRequestId, UUID technicianId, OffsetDateTime expiresAt) {
+    }
+
+    /** Respuestas de una oferta ({@code matching_attempts.response}, DD 5.8). */
+    public static final class OfferResponse {
+        public static final String PENDING = "pendiente";
+        public static final String ACCEPTED = "aceptado";
+        public static final String REJECTED = "rechazado";
+        public static final String EXPIRED = "expirado";
+
+        private OfferResponse() {
+        }
+    }
+
+    /**
+     * Oferta que el técnico va a responder, bloqueada hasta el fin de la transacción. {@code expired} lo calcula la
+     * base con su reloj ({@code expires_at <= now()}), el mismo con el que se fijó el vencimiento.
+     */
+    public record OfferToAnswer(UUID attemptId, UUID serviceRequestId, UUID technicianId, String response,
+            boolean expired) {
+    }
+
+    /** Oferta pendiente como la ve el técnico (esquema {@code Offer} de {@code matching.v1.yaml}): sin dirección. */
+    public record PendingOffer(UUID attemptId, UUID serviceRequestId, UUID categoryId, String description,
+            String localityCode, String localityName, BigDecimal distanceM, OffsetDateTime offeredAt,
+            OffsetDateTime expiresAt) {
+    }
+
+    /** La oferta no existe, es de otro técnico, ya se respondió o venció ({@code 409 oferta-no-disponible}). */
+    public static class OfferNotAvailableException extends RuntimeException {
+
+        public OfferNotAvailableException() {
+            super("La oferta ya no está disponible.");
+        }
+    }
+
+    /** El técnico dejó de estar {@code disponible} antes de aceptar ({@code 409 tecnico-no-disponible}, RN-M7). */
+    public static class TechnicianNotAvailableException extends RuntimeException {
+
+        public TechnicianNotAvailableException() {
+            super("El técnico ya no está disponible para aceptar ofertas.");
+        }
     }
 
     /**

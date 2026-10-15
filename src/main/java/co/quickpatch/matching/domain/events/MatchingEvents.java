@@ -23,6 +23,15 @@ public final class MatchingEvents {
         public static final String TYPE = "matching.offer-created";
     }
 
+    /**
+     * {@code matching.technician-assigned}: el técnico aceptó la oferta (RN-M4). Lleva {@code clientId} para que
+     * Communication avise al cliente.
+     */
+    public record TechnicianAssigned(UUID serviceRequestId, UUID clientId, UUID attemptId, UUID technicianId,
+            OffsetDateTime assignedAt) {
+        public static final String TYPE = "matching.technician-assigned";
+    }
+
     /** {@code matching.no-technician-available}: se agotaron los candidatos (RN-M4, AC9-E4). */
     public record NoTechnicianAvailable(UUID serviceRequestId, UUID clientId, int attemptsCount) {
         public static final String TYPE = "matching.no-technician-available";

@@ -4,6 +4,8 @@ import co.quickpatch.matching.application.matching.MatchingPorts;
 import co.quickpatch.matching.domain.matching.Matching.Candidate;
 import co.quickpatch.matching.domain.matching.Matching.MatchingRequest;
 import co.quickpatch.matching.domain.matching.Matching.Offer;
+import co.quickpatch.matching.domain.matching.Matching.OfferToAnswer;
+import co.quickpatch.matching.domain.matching.Matching.PendingOffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
@@ -26,11 +28,12 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class JdbcMatchingStores
-        implements MatchingPorts.RequestStore, MatchingPorts.CandidateSearch, MatchingPorts.AttemptStore {
+        implements MatchingPorts.RequestStore, MatchingPorts.CandidateSearch, MatchingPorts.AttemptStore,
+        MatchingPorts.OfferStore {
 
     private static final String REQUEST_COLUMNS = """
             r.service_request_id, r.tenant_id, r.client_id, r.category_id,
-            ST_Y(r.location) AS latitude, ST_X(r.location) AS longitude, r.status, r.created_at
+            ST_Y(r.location) AS latitude, ST_X(r.location) AS longitude, r.status, r.created_at, r.description
             """;
 
     /**
@@ -57,11 +60,13 @@ public class JdbcMatchingStores
     public boolean create(MatchingRequest request) {
         return jdbc.update("""
                 INSERT INTO matching_requests
-                    (service_request_id, tenant_id, client_id, category_id, location, status, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ST_SetSRID(ST_MakePoint(?, ?), 4326), ?, ?, now())
+                    (service_request_id, tenant_id, client_id, category_id, location, status, created_at, updated_at,
+                     description)
+                VALUES (?, ?, ?, ?, ST_SetSRID(ST_MakePoint(?, ?), 4326), ?, ?, now(), ?)
                 ON CONFLICT (service_request_id) DO NOTHING
                 """, request.serviceRequestId(), request.tenantId(), request.clientId(), request.categoryId(),
-                request.longitude(), request.latitude(), request.status(), request.createdAt()) == 1;
+                request.longitude(), request.latitude(), request.status(), request.createdAt(),
+                request.description()) == 1;
     }
 
     @Override
@@ -153,10 +158,72 @@ public class JdbcMatchingStores
         return total == null ? 0 : total;
     }
 
+    @Override
+    public List<PendingOffer> pendingFor(UUID technicianId, int offset, int limit) {
+        // La localidad sale del punto de la solicitud; en el borde entre dos localidades se toma la de menor código.
+        return jdbc.query("""
+                SELECT a.id, a.service_request_id, r.category_id, r.description, l.code, l.name, a.distance_m,
+                       a.offered_at, a.expires_at
+                  FROM matching_attempts a
+                  JOIN matching_requests r ON r.service_request_id = a.service_request_id AND r.tenant_id = a.tenant_id
+                  LEFT JOIN LATERAL (SELECT code, name FROM localities
+                                      WHERE ST_Covers(area, r.location) ORDER BY code LIMIT 1) l ON true
+                 WHERE a.technician_id = ? AND a.response = 'pendiente' AND a.expires_at > now()
+                 ORDER BY a.offered_at DESC, a.id
+                 LIMIT ? OFFSET ?
+                """, (rs, row) -> new PendingOffer(rs.getObject("id", UUID.class),
+                        rs.getObject("service_request_id", UUID.class), rs.getObject("category_id", UUID.class),
+                        rs.getString("description"), rs.getString("code"), rs.getString("name"),
+                        rs.getBigDecimal("distance_m"), rs.getObject("offered_at", OffsetDateTime.class),
+                        rs.getObject("expires_at", OffsetDateTime.class)),
+                technicianId, limit, offset);
+    }
+
+    @Override
+    public int countPendingFor(UUID technicianId) {
+        var total = jdbc.queryForObject("""
+                SELECT count(*) FROM matching_attempts
+                 WHERE technician_id = ? AND response = 'pendiente' AND expires_at > now()
+                """, Integer.class, technicianId);
+        return total == null ? 0 : total;
+    }
+
+    @Override
+    public Optional<OfferToAnswer> findOfferForUpdate(UUID attemptId) {
+        return jdbc.query("""
+                SELECT id, service_request_id, technician_id, response, expires_at <= now() AS expired
+                  FROM matching_attempts WHERE id = ? FOR UPDATE
+                """, JdbcMatchingStores::offerToAnswer, attemptId).stream().findFirst();
+    }
+
+    @Override
+    public OffsetDateTime respond(UUID attemptId, String response) {
+        return jdbc.queryForObject(
+                "UPDATE matching_attempts SET response = ?, responded_at = now() WHERE id = ? RETURNING responded_at",
+                OffsetDateTime.class, response, attemptId);
+    }
+
+    @Override
+    public List<OfferToAnswer> expiredForUpdate(int limit) {
+        return jdbc.query("""
+                SELECT id, service_request_id, technician_id, response, true AS expired
+                  FROM matching_attempts
+                 WHERE response = 'pendiente' AND expires_at <= now()
+                 ORDER BY expires_at, id
+                 LIMIT ?
+                 FOR UPDATE SKIP LOCKED
+                """, JdbcMatchingStores::offerToAnswer, limit);
+    }
+
+    private static OfferToAnswer offerToAnswer(ResultSet rs, int row) throws SQLException {
+        return new OfferToAnswer(rs.getObject("id", UUID.class), rs.getObject("service_request_id", UUID.class),
+                rs.getObject("technician_id", UUID.class), rs.getString("response"), rs.getBoolean("expired"));
+    }
+
     private static MatchingRequest request(ResultSet rs, int row) throws SQLException {
         return new MatchingRequest(rs.getObject("service_request_id", UUID.class),
                 rs.getObject("tenant_id", UUID.class), rs.getObject("client_id", UUID.class),
                 rs.getObject("category_id", UUID.class), rs.getDouble("latitude"), rs.getDouble("longitude"),
-                rs.getString("status"), rs.getObject("created_at", OffsetDateTime.class));
+                rs.getString("status"), rs.getObject("created_at", OffsetDateTime.class), rs.getString("description"));
     }
 }
