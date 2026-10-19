@@ -83,6 +83,15 @@ public final class MatchingPorts {
         List<OfferToAnswer> expiredForUpdate(int limit);
     }
 
+    /** Lo que necesita la cancelación de una solicitud (RN-M5, RN-M6; SCRUM-476). */
+    public interface CancellationStore {
+        /** La oferta pendiente de la solicitud, bloqueada ({@code FOR UPDATE}); vacío si no hay (RN-M1: a lo sumo una). */
+        Optional<OfferToAnswer> pendingOfferForUpdate(UUID serviceRequestId);
+
+        /** El técnico que aceptó la oferta de la solicitud; vacío si nadie la aceptó. */
+        Optional<UUID> acceptedTechnician(UUID serviceRequestId);
+    }
+
     /** Transactional Outbox (ADR-007, DD 5.15): el evento se guarda en la transacción del cambio. */
     public interface Outbox {
         /**

@@ -48,6 +48,8 @@ public final class Matching {
         public static final String ACCEPTED = "aceptado";
         public static final String REJECTED = "rechazado";
         public static final String EXPIRED = "expirado";
+        /** La solicitud se canceló con la oferta pendiente (RN-M5, SCRUM-476). */
+        public static final String CANCELLED = "cancelado";
 
         private OfferResponse() {
         }

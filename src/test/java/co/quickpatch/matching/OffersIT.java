@@ -198,6 +198,63 @@ class OffersIT {
         assertThat(tarde.getStatusCode().value()).isEqualTo(409);
     }
 
+    @Test
+    void cancelar_ConOfertaPendiente_LaOfertaSeCancelaYNoSeOfreceANadieMas() throws Exception {
+        var tenant = UUID.randomUUID();
+        var especialidad = UUID.randomUUID();
+        var tecnico = tecnicoListo(tenant, especialidad, List.of("02"));
+        var solicitud = UUID.randomUUID();
+        crearSolicitud(tenant, solicitud, especialidad, LAT_CHAPINERO, LON_CHAPINERO, UUID.randomUUID());
+        var attemptId = esperarEvento("matching.offer-created", solicitud).get("data").get("attemptId").asString();
+
+        // RN-M5: la oferta pendiente pasa a cancelado y la búsqueda termina.
+        cancelar(tenant, solicitud, null);
+        await().atMost(Duration.ofSeconds(30)).until(() -> "cancelado".equals(
+                admin("SELECT status FROM matching_requests WHERE service_request_id = '" + solicitud + "'")));
+        assertThat(admin("SELECT response FROM matching_attempts WHERE id = '" + attemptId + "'")).isEqualTo("cancelado");
+        assertThat(JSON.readTree(cliente(tecnico, tenant).get().uri("/v1/matching/offers").retrieve()
+                .body(String.class)).get("totalItems").asInt()).isZero();
+        assertThat(cliente(tecnico, tenant).post().uri("/v1/matching/offers/" + attemptId + "/accept").retrieve()
+                .toBodilessEntity().getStatusCode().value()).isEqualTo(409);
+        assertThat(admin("SELECT count(*) FROM matching_attempts WHERE service_request_id = '" + solicitud + "'"))
+                .isEqualTo("1");
+        assertThat(admin("SELECT status FROM technician_availability WHERE technician_id = '" + tecnico + "'"))
+                .isEqualTo("disponible");
+    }
+
+    @Test
+    void cancelar_ConTecnicoAsignado_ElTecnicoVuelveADisponible() throws Exception {
+        var tenant = UUID.randomUUID();
+        var especialidad = UUID.randomUUID();
+        var tecnico = tecnicoListo(tenant, especialidad, List.of("02"));
+        var solicitud = UUID.randomUUID();
+        crearSolicitud(tenant, solicitud, especialidad, LAT_CHAPINERO, LON_CHAPINERO, UUID.randomUUID());
+        var attemptId = esperarEvento("matching.offer-created", solicitud).get("data").get("attemptId").asString();
+        assertThat(cliente(tecnico, tenant).post().uri("/v1/matching/offers/" + attemptId + "/accept").retrieve()
+                .toBodilessEntity().getStatusCode().value()).isEqualTo(200);
+        assertThat(admin("SELECT status FROM technician_availability WHERE technician_id = '" + tecnico + "'"))
+                .isEqualTo("ocupado");
+
+        // RN-M6: al cancelar, el técnico asignado queda libre; la oferta aceptada no cambia.
+        cancelar(tenant, solicitud, tecnico);
+        await().atMost(Duration.ofSeconds(30)).until(() -> "disponible".equals(
+                admin("SELECT status FROM technician_availability WHERE technician_id = '" + tecnico + "'")));
+        assertThat(admin("SELECT status FROM matching_requests WHERE service_request_id = '" + solicitud + "'"))
+                .isEqualTo("cancelado");
+        assertThat(admin("SELECT response FROM matching_attempts WHERE id = '" + attemptId + "'")).isEqualTo("aceptado");
+    }
+
+    private static void cancelar(UUID tenant, UUID solicitud, UUID tecnico) throws Exception {
+        publicar("service-request.cancelled", solicitud.toString(), """
+                {"eventId":"%s","eventType":"service-request.cancelled","eventVersion":1,
+                 "occurredAt":"2026-10-13T11:00:00Z","correlationId":"%s","tenantId":"%s",
+                 "producer":"service-request-service",
+                 "data":{"serviceRequestId":"%s","clientId":"%s","technicianId":%s,"cancelledByType":"cliente",
+                         "reason":"Ya no necesito el servicio.","cancelledAt":"2026-10-13T11:00:00Z"}}
+                """.formatted(UUID.randomUUID(), UUID.randomUUID(), tenant, solicitud, UUID.randomUUID(),
+                tecnico == null ? "null" : "\"" + tecnico + "\""));
+    }
+
     /** Técnico registrado, aprobado, disponible y con cobertura en las localidades indicadas. */
     private UUID tecnicoListo(UUID tenant, UUID especialidad, List<String> localidades) throws Exception {
         var tecnico = UUID.randomUUID();
