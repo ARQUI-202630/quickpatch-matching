@@ -1,6 +1,7 @@
 package co.quickpatch.matching.infrastructure.messaging;
 
 import co.quickpatch.matching.application.events.Ports;
+import co.quickpatch.matching.application.events.ServiceRequestCancelledHandler;
 import co.quickpatch.matching.application.events.ServiceRequestCreatedHandler;
 import co.quickpatch.matching.application.events.TechnicianEventsHandler;
 import co.quickpatch.matching.application.matching.MatchingEngine;
@@ -50,6 +51,16 @@ public class KafkaConfig {
     ServiceRequestCreatedHandler serviceRequestCreatedHandler(Ports.TenantTransaction transaction,
             Ports.ProcessedEventStore processedEvents, Ports.MatchingStarter matching) {
         return new ServiceRequestCreatedHandler(transaction, processedEvents, matching);
+    }
+
+    /** Cancelación de la solicitud (RN-M5, RN-M6; SCRUM-476). */
+    @Bean
+    ServiceRequestCancelledHandler serviceRequestCancelledHandler(Ports.TenantTransaction transaction,
+            Ports.ProcessedEventStore processedEvents, MatchingPorts.RequestStore requests,
+            MatchingPorts.CancellationStore cancellations, MatchingPorts.OfferStore offers,
+            TechnicianPorts.AvailabilityStore availability, TechnicianPorts.SearchResumer resumer) {
+        return new ServiceRequestCancelledHandler(transaction, processedEvents, requests, cancellations, offers,
+                availability, resumer);
     }
 
     @Bean

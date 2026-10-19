@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class JdbcMatchingStores
         implements MatchingPorts.RequestStore, MatchingPorts.CandidateSearch, MatchingPorts.AttemptStore,
-        MatchingPorts.OfferStore {
+        MatchingPorts.OfferStore, MatchingPorts.CancellationStore {
 
     private static final String REQUEST_COLUMNS = """
             r.service_request_id, r.tenant_id, r.client_id, r.category_id,
@@ -213,6 +213,21 @@ public class JdbcMatchingStores
                  LIMIT ?
                  FOR UPDATE SKIP LOCKED
                 """, JdbcMatchingStores::offerToAnswer, limit);
+    }
+
+    @Override
+    public Optional<OfferToAnswer> pendingOfferForUpdate(UUID serviceRequestId) {
+        return jdbc.query("""
+                SELECT id, service_request_id, technician_id, response, expires_at <= now() AS expired
+                  FROM matching_attempts WHERE service_request_id = ? AND response = 'pendiente' FOR UPDATE
+                """, JdbcMatchingStores::offerToAnswer, serviceRequestId).stream().findFirst();
+    }
+
+    @Override
+    public Optional<UUID> acceptedTechnician(UUID serviceRequestId) {
+        return jdbc.query("""
+                SELECT technician_id FROM matching_attempts WHERE service_request_id = ? AND response = 'aceptado'
+                """, (rs, row) -> rs.getObject("technician_id", UUID.class), serviceRequestId).stream().findFirst();
     }
 
     private static OfferToAnswer offerToAnswer(ResultSet rs, int row) throws SQLException {
