@@ -2,6 +2,7 @@ package co.quickpatch.matching.infrastructure.messaging;
 
 import co.quickpatch.matching.application.events.Ports;
 import co.quickpatch.matching.application.events.ServiceRequestCancelledHandler;
+import co.quickpatch.matching.application.events.ServiceRequestCompletedHandler;
 import co.quickpatch.matching.application.events.ServiceRequestCreatedHandler;
 import co.quickpatch.matching.application.events.TechnicianEventsHandler;
 import co.quickpatch.matching.application.matching.MatchingEngine;
@@ -61,6 +62,14 @@ public class KafkaConfig {
             TechnicianPorts.AvailabilityStore availability, TechnicianPorts.SearchResumer resumer) {
         return new ServiceRequestCancelledHandler(transaction, processedEvents, requests, cancellations, offers,
                 availability, resumer);
+    }
+
+    /** Servicio completado: el técnico vuelve a disponible (RN-M6; SCRUM-94). */
+    @Bean
+    ServiceRequestCompletedHandler serviceRequestCompletedHandler(Ports.TenantTransaction transaction,
+            Ports.ProcessedEventStore processedEvents, MatchingPorts.CancellationStore assignments,
+            TechnicianPorts.AvailabilityStore availability, TechnicianPorts.SearchResumer resumer) {
+        return new ServiceRequestCompletedHandler(transaction, processedEvents, assignments, availability, resumer);
     }
 
     @Bean
