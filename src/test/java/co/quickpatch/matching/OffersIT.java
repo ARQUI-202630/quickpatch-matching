@@ -244,6 +244,34 @@ class OffersIT {
         assertThat(admin("SELECT response FROM matching_attempts WHERE id = '" + attemptId + "'")).isEqualTo("aceptado");
     }
 
+    @Test
+    void completar_ElTecnicoVuelveADisponible() throws Exception {
+        var tenant = UUID.randomUUID();
+        var especialidad = UUID.randomUUID();
+        var tecnico = tecnicoListo(tenant, especialidad, List.of("02"));
+        var solicitud = UUID.randomUUID();
+        crearSolicitud(tenant, solicitud, especialidad, LAT_CHAPINERO, LON_CHAPINERO, UUID.randomUUID());
+        var attemptId = esperarEvento("matching.offer-created", solicitud).get("data").get("attemptId").asString();
+        assertThat(cliente(tecnico, tenant).post().uri("/v1/matching/offers/" + attemptId + "/accept").retrieve()
+                .toBodilessEntity().getStatusCode().value()).isEqualTo(200);
+        assertThat(admin("SELECT status FROM technician_availability WHERE technician_id = '" + tecnico + "'"))
+                .isEqualTo("ocupado");
+
+        // RN-M6: al completar el servicio, el técnico queda libre; la búsqueda sigue en asignado.
+        publicar("service-request.completed", solicitud.toString(), """
+                {"eventId":"%s","eventType":"service-request.completed","eventVersion":1,
+                 "occurredAt":"2026-10-20T17:10:00Z","correlationId":"%s","tenantId":"%s",
+                 "producer":"service-request-service",
+                 "data":{"serviceRequestId":"%s","clientId":"%s","companyId":null,"technicianId":"%s","quoteId":"%s",
+                         "totalAmount":"185000.00","completedAt":"2026-10-20T17:10:00Z"}}
+                """.formatted(UUID.randomUUID(), UUID.randomUUID(), tenant, solicitud, UUID.randomUUID(), tecnico,
+                UUID.randomUUID()));
+        await().atMost(Duration.ofSeconds(30)).until(() -> "disponible".equals(
+                admin("SELECT status FROM technician_availability WHERE technician_id = '" + tecnico + "'")));
+        assertThat(admin("SELECT status FROM matching_requests WHERE service_request_id = '" + solicitud + "'"))
+                .isEqualTo("asignado");
+    }
+
     private static void cancelar(UUID tenant, UUID solicitud, UUID tecnico) throws Exception {
         publicar("service-request.cancelled", solicitud.toString(), """
                 {"eventId":"%s","eventType":"service-request.cancelled","eventVersion":1,
