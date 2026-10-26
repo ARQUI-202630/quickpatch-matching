@@ -58,6 +58,7 @@ jobs:
             target/surefire-reports/*.xml
             target/failsafe-reports/*.xml
           if-no-files-found: ignore
+          retention-days: 14
 
   # Imagen en GHCR (ADR-015). Etiqueta por contenido: t-<hash del árbol de archivos>. Un merge de release/* a main
   # sin otros cambios tiene el mismo árbol que la rama release, así que producción despliega exactamente la imagen
