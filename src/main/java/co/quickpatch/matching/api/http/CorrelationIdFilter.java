@@ -1,4 +1,4 @@
-package co.quickpatch.matching.api;
+package co.quickpatch.matching.api.http;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

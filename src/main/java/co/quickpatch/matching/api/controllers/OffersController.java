@@ -1,4 +1,4 @@
-package co.quickpatch.matching.api;
+package co.quickpatch.matching.api.controllers;
 
 import co.quickpatch.matching.application.matching.OfferService;
 import co.quickpatch.matching.domain.matching.Matching.OfferResponse;

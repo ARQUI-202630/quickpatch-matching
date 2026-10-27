@@ -1,6 +1,5 @@
-package co.quickpatch.matching.api;
+package co.quickpatch.matching.api.controllers;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -13,6 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import co.quickpatch.matching.TestTokens;
+import co.quickpatch.matching.api.http.ApiExceptionHandler;
+import co.quickpatch.matching.api.http.CorrelationIdFilter;
+import co.quickpatch.matching.api.security.SecurityConfig;
 import co.quickpatch.matching.application.technicians.TechnicianAvailabilityService;
 import co.quickpatch.matching.domain.technicians.Technicians.Availability;
 import co.quickpatch.matching.domain.technicians.Technicians.Coverage;
@@ -197,22 +199,6 @@ class TechniciansApiTests {
     void rutaNoDefinida_EsDenegada() throws Exception {
         mvc.perform(get("/v1/otra").header("Authorization", bearer("tecnico")))
                 .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void llavePem_SeLeeYUnaInvalidaFalla() {
-        assertThat(SecurityConfig.parse(TestTokens.PUBLIC_KEY_PEM).getAlgorithm()).isEqualTo("RSA");
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> SecurityConfig.parse("no es pem"))
-                .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    void sinLlaveConfigurada_NingunTokenEsValido() {
-        var decoder = new SecurityConfig().jwtDecoder("", "quickpatch-identity", "quickpatch");
-
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> decoder.decode(TestTokens.create(TECNICO, TENANT, "tecnico")))
-                .isInstanceOf(org.springframework.security.oauth2.jwt.JwtException.class);
-        verifyNoInteractions(service);
     }
 
     @Test

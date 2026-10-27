@@ -1,4 +1,4 @@
-package co.quickpatch.matching.api;
+package co.quickpatch.matching.api.controllers;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -13,6 +13,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import co.quickpatch.matching.TestTokens;
+import co.quickpatch.matching.api.http.ApiExceptionHandler;
+import co.quickpatch.matching.api.http.CorrelationIdFilter;
+import co.quickpatch.matching.api.security.SecurityConfig;
 import co.quickpatch.matching.application.matching.OfferService;
 import co.quickpatch.matching.domain.matching.Matching.OfferNotAvailableException;
 import co.quickpatch.matching.domain.matching.Matching.PendingOffer;
