@@ -1,5 +1,6 @@
-package co.quickpatch.matching.api;
+package co.quickpatch.matching.api.http;
 
+import co.quickpatch.matching.api.controllers.TechniciansController;
 import co.quickpatch.matching.domain.matching.Matching.OfferNotAvailableException;
 import co.quickpatch.matching.domain.matching.Matching.TechnicianNotAvailableException;
 import co.quickpatch.matching.domain.technicians.Technicians.InvalidTransitionException;
@@ -11,9 +12,9 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /** Traduce las excepciones de los casos de uso a los errores del contrato. */
 @RestControllerAdvice

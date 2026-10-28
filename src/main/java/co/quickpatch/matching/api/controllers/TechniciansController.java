@@ -1,4 +1,4 @@
-package co.quickpatch.matching.api;
+package co.quickpatch.matching.api.controllers;
 
 import co.quickpatch.matching.application.technicians.TechnicianAvailabilityService;
 import co.quickpatch.matching.domain.technicians.Technicians.Availability;
@@ -77,7 +77,7 @@ public class TechniciansController {
     }
 
     /** El token es válido pero no trae {@code sub} o {@code tenant_id} como UUID. */
-    static class InvalidTokenClaimsException extends RuntimeException {
+    public static class InvalidTokenClaimsException extends RuntimeException {
 
         InvalidTokenClaimsException() {
             super("El token no trae usuario ni tenant válidos.");

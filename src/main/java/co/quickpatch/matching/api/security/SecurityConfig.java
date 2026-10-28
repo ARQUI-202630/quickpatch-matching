@@ -1,5 +1,6 @@
-package co.quickpatch.matching.api;
+package co.quickpatch.matching.api.security;
 
+import co.quickpatch.matching.api.http.Problems;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.X509EncodedKeySpec;
