@@ -2,6 +2,7 @@ package co.quickpatch.matching.application.events;
 
 import co.quickpatch.matching.domain.events.EventEnvelope;
 import co.quickpatch.matching.domain.events.ServiceRequestCreated;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -31,5 +32,19 @@ public final class Ports {
      */
     public interface MatchingStarter {
         void start(EventEnvelope<ServiceRequestCreated> event);
+    }
+
+    /** Estado del técnico que publica Identity (P-01): especialidad y verificación, con su versión (ADR-017). */
+    public record TechnicianSnapshot(UUID tenantId, UUID technicianId, UUID specialtyId, String verificationStatus,
+            OffsetDateTime updatedAt) {
+    }
+
+    /**
+     * Proyección del técnico en {@code technician_availability} (DD 5.6). Crea la fila en {@code no_disponible}
+     * si no existe; si existe, copia la especialidad y la verificación sin tocar la disponibilidad.
+     */
+    public interface TechnicianProjection {
+        /** Devuelve {@code false} si ya había una versión igual o más reciente (el evento llegó tarde). */
+        boolean apply(TechnicianSnapshot snapshot);
     }
 }

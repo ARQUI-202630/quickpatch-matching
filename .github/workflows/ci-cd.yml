@@ -47,6 +47,19 @@ jobs:
       - name: Cobertura mínima
         run: python3 .github/scripts/cobertura.py jacoco 80 target/site/jacoco/jacoco.xml
 
+      # SCRUM-602: informe de cobertura y resultados de las pruebas, descargables desde la ejecución.
+      - name: Guardar cobertura y resultados de las pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-y-resultados
+          path: |
+            target/site/jacoco/jacoco.xml
+            target/surefire-reports/*.xml
+            target/failsafe-reports/*.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
   # Imagen en GHCR (ADR-015). Etiqueta por contenido: t-<hash del árbol de archivos>. Un merge de release/* a main
   # sin otros cambios tiene el mismo árbol que la rama release, así que producción despliega exactamente la imagen
   # que se probó en QA, sin volver a construirla. Si main trae algo que no pasó por release/*, se construye y se avisa.
@@ -152,6 +165,17 @@ jobs:
             echo "::error::No existe el Deployment '$SVC' en $AMBIENTE. Falta aplicar deploy/k8s de este repo (infrastructure/ansible, primer-despliegue-servicios.yml)."
             exit 1
           fi
+
+      # RNF-08 (SCRUM-415): producción solo recibe la versión que corre en QA y que pasó las pruebas de sistema
+      # después de llegar a QA. El script lo instala deploy-runner.yml en VM1 (infrastructure/CI-CD.md).
+      - name: Compuerta RNF-08
+        if: env.AMBIENTE == 'produccion'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMPUERTA_EXCEPCION: ${{ vars.COMPUERTA_RNF08_EXCEPCION }}
+        run: |
+          command -v compuerta-qa > /dev/null || { echo "::error::Falta compuerta-qa en el runner: aplicar deploy-runner.yml en VM1."; exit 1; }
+          compuerta-qa servicio "$SVC" "$IMAGEN"
 
       - name: Actualizar la imagen
         run: |
