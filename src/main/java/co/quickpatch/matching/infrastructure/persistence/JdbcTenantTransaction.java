@@ -1,6 +1,6 @@
 package co.quickpatch.matching.infrastructure.persistence;
 
-import co.quickpatch.matching.application.events.Ports;
+import co.quickpatch.matching.application.common.TenantTransaction;
 import java.util.UUID;
 import java.util.function.Supplier;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -12,7 +12,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  * solo lo que dura la transacción, y después ejecuta el trabajo. Sin tenant fijado, RLS no deja ver ni escribir.
  */
 @Component
-public class JdbcTenantTransaction implements Ports.TenantTransaction {
+public class JdbcTenantTransaction implements TenantTransaction {
 
     private final TransactionTemplate transactions;
     private final JdbcTemplate jdbc;

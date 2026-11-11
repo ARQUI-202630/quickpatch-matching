@@ -1,5 +1,6 @@
 package co.quickpatch.matching.application.matching;
 
+import co.quickpatch.matching.application.common.TenantTransaction;
 import co.quickpatch.matching.domain.matching.Matching.Candidate;
 import co.quickpatch.matching.domain.matching.Matching.MatchingRequest;
 import co.quickpatch.matching.domain.matching.Matching.Offer;
@@ -13,7 +14,7 @@ import java.util.UUID;
 
 /**
  * Puertos del algoritmo de matching; los implementa la infraestructura. Todos corren dentro de la transacción por
- * tenant ({@code Ports.TenantTransaction}), así que RLS solo deja ver las filas de ese tenant.
+ * tenant ({@code TenantTransaction}), así que RLS solo deja ver las filas de ese tenant.
  */
 public final class MatchingPorts {
 

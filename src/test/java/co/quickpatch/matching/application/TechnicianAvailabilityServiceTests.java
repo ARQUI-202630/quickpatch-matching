@@ -1,9 +1,9 @@
 package co.quickpatch.matching.application;
 
+import co.quickpatch.matching.application.common.TenantTransaction;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import co.quickpatch.matching.application.events.Ports;
 import co.quickpatch.matching.application.technicians.TechnicianAvailabilityService;
 import co.quickpatch.matching.application.technicians.TechnicianPorts;
 import co.quickpatch.matching.domain.matching.Matching.ResumeTrigger;
@@ -37,7 +37,7 @@ class TechnicianAvailabilityServiceTests {
     private final List<Locality> localidades = IntStream.rangeClosed(1, 20)
             .mapToObj(i -> new Locality("%02d".formatted(i), "Localidad " + i)).toList();
 
-    private final Ports.TenantTransaction transaccion = new Ports.TenantTransaction() {
+    private final TenantTransaction transaccion = new TenantTransaction() {
         @Override
         public <T> T execute(UUID tenantId, Supplier<T> work) {
             tenantsUsados.add(tenantId);

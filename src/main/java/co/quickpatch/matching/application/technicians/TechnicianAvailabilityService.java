@@ -1,6 +1,6 @@
 package co.quickpatch.matching.application.technicians;
 
-import co.quickpatch.matching.application.events.Ports;
+import co.quickpatch.matching.application.common.TenantTransaction;
 import co.quickpatch.matching.domain.matching.Matching.ResumeTrigger;
 import co.quickpatch.matching.domain.technicians.Technicians;
 import co.quickpatch.matching.domain.technicians.Technicians.Availability;
@@ -23,13 +23,13 @@ import java.util.stream.Collectors;
  */
 public class TechnicianAvailabilityService {
 
-    private final Ports.TenantTransaction transaction;
+    private final TenantTransaction transaction;
     private final TechnicianPorts.AvailabilityStore availability;
     private final TechnicianPorts.CoverageStore coverage;
     private final TechnicianPorts.LocalityCatalog localities;
     private final TechnicianPorts.SearchResumer resumer;
 
-    public TechnicianAvailabilityService(Ports.TenantTransaction transaction,
+    public TechnicianAvailabilityService(TenantTransaction transaction,
             TechnicianPorts.AvailabilityStore availability, TechnicianPorts.CoverageStore coverage,
             TechnicianPorts.LocalityCatalog localities, TechnicianPorts.SearchResumer resumer) {
         this.transaction = Objects.requireNonNull(transaction);

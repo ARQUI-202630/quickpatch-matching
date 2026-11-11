@@ -1,6 +1,6 @@
 package co.quickpatch.matching.application.matching;
 
-import co.quickpatch.matching.application.events.Ports;
+import co.quickpatch.matching.application.common.TenantTransaction;
 import co.quickpatch.matching.application.technicians.TechnicianPorts;
 import co.quickpatch.matching.domain.events.MatchingEvents.TechnicianAssigned;
 import co.quickpatch.matching.domain.matching.Matching.OfferNotAvailableException;
@@ -30,7 +30,7 @@ public class OfferService {
 
     static final int MAX_PAGE_SIZE = 100;
 
-    private final Ports.TenantTransaction transaction;
+    private final TenantTransaction transaction;
     private final MatchingPorts.OfferStore offers;
     private final MatchingPorts.RequestStore requests;
     private final TechnicianPorts.AvailabilityStore availability;
@@ -38,7 +38,7 @@ public class OfferService {
     private final MatchingPorts.CorrelationContext correlation;
     private final MatchingEngine engine;
 
-    public OfferService(Ports.TenantTransaction transaction, MatchingPorts.OfferStore offers,
+    public OfferService(TenantTransaction transaction, MatchingPorts.OfferStore offers,
             MatchingPorts.RequestStore requests, TechnicianPorts.AvailabilityStore availability,
             MatchingPorts.Outbox outbox, MatchingPorts.CorrelationContext correlation, MatchingEngine engine) {
         this.transaction = Objects.requireNonNull(transaction);

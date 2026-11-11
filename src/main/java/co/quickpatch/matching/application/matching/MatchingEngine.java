@@ -1,6 +1,5 @@
 package co.quickpatch.matching.application.matching;
 
-import co.quickpatch.matching.application.events.Ports;
 import co.quickpatch.matching.application.technicians.TechnicianPorts;
 import co.quickpatch.matching.domain.events.EventEnvelope;
 import co.quickpatch.matching.domain.events.MatchingEvents.NoTechnicianAvailable;
@@ -32,7 +31,7 @@ import java.util.UUID;
  *
  * {@link #offerNext} es también el paso que sigue a un rechazo o a un vencimiento (RN-M3).
  */
-public class MatchingEngine implements Ports.MatchingStarter, TechnicianPorts.SearchResumer {
+public class MatchingEngine implements MatchingStarter, TechnicianPorts.SearchResumer {
 
     /** Candidatos que se leen por intento; si otra transacción toma uno en paralelo, se prueba el siguiente. */
     static final int CANDIDATES_PER_OFFER = 5;

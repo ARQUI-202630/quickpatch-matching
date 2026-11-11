@@ -1,9 +1,9 @@
 package co.quickpatch.matching.application;
 
+import co.quickpatch.matching.application.common.TenantTransaction;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import co.quickpatch.matching.application.events.Ports;
 import co.quickpatch.matching.application.events.ServiceRequestCompletedHandler;
 import co.quickpatch.matching.application.events.ServiceRequestCompletedHandler.Outcome;
 import co.quickpatch.matching.application.matching.MatchingPorts;
@@ -38,7 +38,7 @@ class ServiceRequestCompletedHandlerTests {
     private final List<String> reanudados = new ArrayList<>();
     private UUID aceptado;
 
-    private final Ports.TenantTransaction transaccion = new Ports.TenantTransaction() {
+    private final TenantTransaction transaccion = new TenantTransaction() {
         @Override
         public <T> T execute(UUID tenantId, Supplier<T> work) {
             tenantsUsados.add(tenantId);
