@@ -1,6 +1,6 @@
 package co.quickpatch.matching.infrastructure.persistence;
 
-import co.quickpatch.matching.application.events.Ports;
+import co.quickpatch.matching.application.common.ProcessedEventStore;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  * {@code ON CONFLICT DO NOTHING} inserta cero filas cuando ya estaba registrado.
  */
 @Component
-public class JdbcProcessedEventStore implements Ports.ProcessedEventStore {
+public class JdbcProcessedEventStore implements ProcessedEventStore {
 
     private final JdbcTemplate jdbc;
 

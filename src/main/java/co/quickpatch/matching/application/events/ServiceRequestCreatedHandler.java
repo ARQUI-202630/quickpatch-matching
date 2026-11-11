@@ -1,5 +1,8 @@
 package co.quickpatch.matching.application.events;
 
+import co.quickpatch.matching.application.common.ProcessedEventStore;
+import co.quickpatch.matching.application.common.TenantTransaction;
+import co.quickpatch.matching.application.matching.MatchingStarter;
 import co.quickpatch.matching.domain.events.EventEnvelope;
 import co.quickpatch.matching.domain.events.ServiceRequestCreated;
 import java.util.Objects;
@@ -14,12 +17,12 @@ public class ServiceRequestCreatedHandler {
     /** Resultado de aplicar un evento. */
     public enum Outcome { APPLIED, DUPLICATE }
 
-    private final Ports.TenantTransaction transaction;
-    private final Ports.ProcessedEventStore processedEvents;
-    private final Ports.MatchingStarter matching;
+    private final TenantTransaction transaction;
+    private final ProcessedEventStore processedEvents;
+    private final MatchingStarter matching;
 
-    public ServiceRequestCreatedHandler(Ports.TenantTransaction transaction,
-            Ports.ProcessedEventStore processedEvents, Ports.MatchingStarter matching) {
+    public ServiceRequestCreatedHandler(TenantTransaction transaction,
+            ProcessedEventStore processedEvents, MatchingStarter matching) {
         this.transaction = Objects.requireNonNull(transaction);
         this.processedEvents = Objects.requireNonNull(processedEvents);
         this.matching = Objects.requireNonNull(matching);

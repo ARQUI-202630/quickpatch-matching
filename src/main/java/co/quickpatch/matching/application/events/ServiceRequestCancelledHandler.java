@@ -1,5 +1,7 @@
 package co.quickpatch.matching.application.events;
 
+import co.quickpatch.matching.application.common.ProcessedEventStore;
+import co.quickpatch.matching.application.common.TenantTransaction;
 import co.quickpatch.matching.application.matching.MatchingPorts;
 import co.quickpatch.matching.application.technicians.TechnicianPorts;
 import co.quickpatch.matching.domain.events.EventEnvelope;
@@ -28,15 +30,15 @@ public class ServiceRequestCancelledHandler {
     /** Resultado de aplicar un evento. */
     public enum Outcome { APPLIED, DUPLICATE, ALREADY_CANCELLED, NOT_FOUND }
 
-    private final Ports.TenantTransaction transaction;
-    private final Ports.ProcessedEventStore processedEvents;
+    private final TenantTransaction transaction;
+    private final ProcessedEventStore processedEvents;
     private final MatchingPorts.RequestStore requests;
     private final MatchingPorts.CancellationStore cancellations;
     private final MatchingPorts.OfferStore offers;
     private final TechnicianPorts.AvailabilityStore availability;
     private final TechnicianPorts.SearchResumer resumer;
 
-    public ServiceRequestCancelledHandler(Ports.TenantTransaction transaction, Ports.ProcessedEventStore processedEvents,
+    public ServiceRequestCancelledHandler(TenantTransaction transaction, ProcessedEventStore processedEvents,
             MatchingPorts.RequestStore requests, MatchingPorts.CancellationStore cancellations,
             MatchingPorts.OfferStore offers, TechnicianPorts.AvailabilityStore availability,
             TechnicianPorts.SearchResumer resumer) {

@@ -1,6 +1,9 @@
 package co.quickpatch.matching.infrastructure.messaging;
 
-import co.quickpatch.matching.application.events.Ports;
+import co.quickpatch.matching.application.common.ProcessedEventStore;
+import co.quickpatch.matching.application.common.TenantTransaction;
+import co.quickpatch.matching.application.matching.MatchingStarter;
+import co.quickpatch.matching.application.technicians.TechnicianProjection;
 import co.quickpatch.matching.application.events.ServiceRequestCancelledHandler;
 import co.quickpatch.matching.application.events.ServiceRequestCompletedHandler;
 import co.quickpatch.matching.application.events.ServiceRequestCreatedHandler;
@@ -42,22 +45,22 @@ public class KafkaConfig {
 
     /** Ofertas del técnico: listar, aceptar, rechazar y vencer (RF-10, RN-M2 a RN-M8; SCRUM-79). */
     @Bean
-    OfferService offerService(Ports.TenantTransaction transaction, MatchingPorts.OfferStore offers,
+    OfferService offerService(TenantTransaction transaction, MatchingPorts.OfferStore offers,
             MatchingPorts.RequestStore requests, TechnicianPorts.AvailabilityStore availability,
             MatchingPorts.Outbox outbox, MatchingPorts.CorrelationContext correlation, MatchingEngine engine) {
         return new OfferService(transaction, offers, requests, availability, outbox, correlation, engine);
     }
 
     @Bean
-    ServiceRequestCreatedHandler serviceRequestCreatedHandler(Ports.TenantTransaction transaction,
-            Ports.ProcessedEventStore processedEvents, Ports.MatchingStarter matching) {
+    ServiceRequestCreatedHandler serviceRequestCreatedHandler(TenantTransaction transaction,
+            ProcessedEventStore processedEvents, MatchingStarter matching) {
         return new ServiceRequestCreatedHandler(transaction, processedEvents, matching);
     }
 
     /** Cancelación de la solicitud (RN-M5, RN-M6; SCRUM-476). */
     @Bean
-    ServiceRequestCancelledHandler serviceRequestCancelledHandler(Ports.TenantTransaction transaction,
-            Ports.ProcessedEventStore processedEvents, MatchingPorts.RequestStore requests,
+    ServiceRequestCancelledHandler serviceRequestCancelledHandler(TenantTransaction transaction,
+            ProcessedEventStore processedEvents, MatchingPorts.RequestStore requests,
             MatchingPorts.CancellationStore cancellations, MatchingPorts.OfferStore offers,
             TechnicianPorts.AvailabilityStore availability, TechnicianPorts.SearchResumer resumer) {
         return new ServiceRequestCancelledHandler(transaction, processedEvents, requests, cancellations, offers,
@@ -66,21 +69,21 @@ public class KafkaConfig {
 
     /** Servicio completado: el técnico vuelve a disponible (RN-M6; SCRUM-94). */
     @Bean
-    ServiceRequestCompletedHandler serviceRequestCompletedHandler(Ports.TenantTransaction transaction,
-            Ports.ProcessedEventStore processedEvents, MatchingPorts.CancellationStore assignments,
+    ServiceRequestCompletedHandler serviceRequestCompletedHandler(TenantTransaction transaction,
+            ProcessedEventStore processedEvents, MatchingPorts.CancellationStore assignments,
             TechnicianPorts.AvailabilityStore availability, TechnicianPorts.SearchResumer resumer) {
         return new ServiceRequestCompletedHandler(transaction, processedEvents, assignments, availability, resumer);
     }
 
     @Bean
-    TechnicianEventsHandler technicianEventsHandler(Ports.TenantTransaction transaction,
-            Ports.ProcessedEventStore processedEvents, Ports.TechnicianProjection projection,
+    TechnicianEventsHandler technicianEventsHandler(TenantTransaction transaction,
+            ProcessedEventStore processedEvents, TechnicianProjection projection,
             TechnicianPorts.SearchResumer resumer) {
         return new TechnicianEventsHandler(transaction, processedEvents, projection, resumer);
     }
 
     @Bean
-    TechnicianAvailabilityService technicianAvailabilityService(Ports.TenantTransaction transaction,
+    TechnicianAvailabilityService technicianAvailabilityService(TenantTransaction transaction,
             TechnicianPorts.AvailabilityStore availability, TechnicianPorts.CoverageStore coverage,
             TechnicianPorts.LocalityCatalog localities, TechnicianPorts.SearchResumer resumer) {
         return new TechnicianAvailabilityService(transaction, availability, coverage, localities, resumer);
