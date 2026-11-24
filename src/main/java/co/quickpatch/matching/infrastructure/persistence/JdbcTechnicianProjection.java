@@ -1,6 +1,7 @@
 package co.quickpatch.matching.infrastructure.persistence;
 
-import co.quickpatch.matching.application.events.Ports;
+import co.quickpatch.matching.application.technicians.TechnicianProjection;
+import co.quickpatch.matching.application.technicians.TechnicianSnapshot;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component;
  * un servicio en curso no se interrumpe al suspender (RN-TP2).
  */
 @Component
-public class JdbcTechnicianProjection implements Ports.TechnicianProjection {
+public class JdbcTechnicianProjection implements TechnicianProjection {
 
     private final JdbcTemplate jdbc;
 
@@ -21,7 +22,7 @@ public class JdbcTechnicianProjection implements Ports.TechnicianProjection {
     }
 
     @Override
-    public boolean apply(Ports.TechnicianSnapshot snapshot) {
+    public boolean apply(TechnicianSnapshot snapshot) {
         int rows = jdbc.update("""
                 INSERT INTO technician_availability
                     (technician_id, tenant_id, specialty_id, verification_status, status, updated_at, projection_updated_at)

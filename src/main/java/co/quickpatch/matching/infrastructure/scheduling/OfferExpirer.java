@@ -1,6 +1,6 @@
 package co.quickpatch.matching.infrastructure.scheduling;
 
-import co.quickpatch.matching.application.events.Ports;
+import co.quickpatch.matching.application.common.TenantTransaction;
 import co.quickpatch.matching.application.matching.OfferService;
 import co.quickpatch.matching.infrastructure.persistence.DatabaseRoles;
 import java.util.List;
@@ -28,12 +28,12 @@ public class OfferExpirer {
 
     private final TransactionTemplate transactions;
     private final JdbcTemplate jdbc;
-    private final Ports.TenantTransaction tenantTransaction;
+    private final TenantTransaction tenantTransaction;
     private final OfferService offers;
     private final String schedulerRole;
     private final int batchSize;
 
-    public OfferExpirer(TransactionTemplate transactions, JdbcTemplate jdbc, Ports.TenantTransaction tenantTransaction,
+    public OfferExpirer(TransactionTemplate transactions, JdbcTemplate jdbc, TenantTransaction tenantTransaction,
             OfferService offers, @Value("${quickpatch.matching.scheduler-role:}") String schedulerRole,
             @Value("${quickpatch.matching.expiry-batch-size:50}") int batchSize) {
         this.transactions = transactions;

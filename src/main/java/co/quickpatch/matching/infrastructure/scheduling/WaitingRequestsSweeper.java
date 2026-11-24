@@ -1,6 +1,6 @@
 package co.quickpatch.matching.infrastructure.scheduling;
 
-import co.quickpatch.matching.application.events.Ports;
+import co.quickpatch.matching.application.common.TenantTransaction;
 import co.quickpatch.matching.application.matching.MatchingEngine;
 import co.quickpatch.matching.infrastructure.persistence.DatabaseRoles;
 import java.util.List;
@@ -27,13 +27,13 @@ public class WaitingRequestsSweeper {
 
     private final TransactionTemplate transactions;
     private final JdbcTemplate jdbc;
-    private final Ports.TenantTransaction tenantTransaction;
+    private final TenantTransaction tenantTransaction;
     private final MatchingEngine engine;
     private final String schedulerRole;
     private final int batchSize;
 
     public WaitingRequestsSweeper(TransactionTemplate transactions, JdbcTemplate jdbc,
-            Ports.TenantTransaction tenantTransaction, MatchingEngine engine,
+            TenantTransaction tenantTransaction, MatchingEngine engine,
             @Value("${quickpatch.matching.scheduler-role:}") String schedulerRole,
             @Value("${quickpatch.matching.sweep-batch-size:20}") int batchSize) {
         this.transactions = transactions;

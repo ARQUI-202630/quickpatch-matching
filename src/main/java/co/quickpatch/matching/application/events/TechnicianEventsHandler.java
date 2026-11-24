@@ -1,5 +1,9 @@
 package co.quickpatch.matching.application.events;
 
+import co.quickpatch.matching.application.common.ProcessedEventStore;
+import co.quickpatch.matching.application.common.TenantTransaction;
+import co.quickpatch.matching.application.technicians.TechnicianProjection;
+import co.quickpatch.matching.application.technicians.TechnicianSnapshot;
 import co.quickpatch.matching.application.technicians.TechnicianPorts;
 import co.quickpatch.matching.domain.events.EventEnvelope;
 import co.quickpatch.matching.domain.events.TechnicianRegistered;
@@ -20,13 +24,13 @@ public class TechnicianEventsHandler {
     /** Resultado de aplicar un evento. */
     public enum Outcome { APPLIED, DUPLICATE, STALE }
 
-    private final Ports.TenantTransaction transaction;
-    private final Ports.ProcessedEventStore processedEvents;
-    private final Ports.TechnicianProjection projection;
+    private final TenantTransaction transaction;
+    private final ProcessedEventStore processedEvents;
+    private final TechnicianProjection projection;
     private final TechnicianPorts.SearchResumer resumer;
 
-    public TechnicianEventsHandler(Ports.TenantTransaction transaction, Ports.ProcessedEventStore processedEvents,
-            Ports.TechnicianProjection projection, TechnicianPorts.SearchResumer resumer) {
+    public TechnicianEventsHandler(TenantTransaction transaction, ProcessedEventStore processedEvents,
+            TechnicianProjection projection, TechnicianPorts.SearchResumer resumer) {
         this.transaction = Objects.requireNonNull(transaction);
         this.processedEvents = Objects.requireNonNull(processedEvents);
         this.projection = Objects.requireNonNull(projection);
@@ -38,7 +42,7 @@ public class TechnicianEventsHandler {
         event.validate(TechnicianRegistered.TYPE, TechnicianRegistered.VERSION);
         var data = event.data();
         data.validate();
-        return apply(event, new Ports.TechnicianSnapshot(event.tenantId(), data.technicianId(), data.specialtyId(),
+        return apply(event, new TechnicianSnapshot(event.tenantId(), data.technicianId(), data.specialtyId(),
                 data.verificationStatus(), data.updatedAt()));
     }
 
@@ -47,11 +51,11 @@ public class TechnicianEventsHandler {
         event.validate(TechnicianVerificationChanged.TYPE, TechnicianVerificationChanged.VERSION);
         var data = event.data();
         data.validate();
-        return apply(event, new Ports.TechnicianSnapshot(event.tenantId(), data.technicianId(), data.specialtyId(),
+        return apply(event, new TechnicianSnapshot(event.tenantId(), data.technicianId(), data.specialtyId(),
                 data.verificationStatus(), data.updatedAt()));
     }
 
-    private Outcome apply(EventEnvelope<?> event, Ports.TechnicianSnapshot snapshot) {
+    private Outcome apply(EventEnvelope<?> event, TechnicianSnapshot snapshot) {
         return transaction.execute(event.tenantId(), () -> {
             if (!processedEvents.register(event.eventId(), event.tenantId(), event.eventType())) {
                 return Outcome.DUPLICATE;

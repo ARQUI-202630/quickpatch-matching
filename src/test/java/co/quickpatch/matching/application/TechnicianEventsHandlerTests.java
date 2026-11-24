@@ -1,9 +1,11 @@
 package co.quickpatch.matching.application;
 
+import co.quickpatch.matching.application.common.TenantTransaction;
+import co.quickpatch.matching.application.technicians.TechnicianProjection;
+import co.quickpatch.matching.application.technicians.TechnicianSnapshot;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import co.quickpatch.matching.application.events.Ports;
 import co.quickpatch.matching.application.events.TechnicianEventsHandler;
 import co.quickpatch.matching.application.events.TechnicianEventsHandler.Outcome;
 import co.quickpatch.matching.domain.events.EventEnvelope;
@@ -31,10 +33,10 @@ class TechnicianEventsHandlerTests {
     private final UUID especialidad = UUID.randomUUID();
     private final List<UUID> tenantsUsados = new ArrayList<>();
     private final Set<UUID> registrados = new HashSet<>();
-    private final Map<UUID, Ports.TechnicianSnapshot> proyeccion = new HashMap<>();
+    private final Map<UUID, TechnicianSnapshot> proyeccion = new HashMap<>();
     private final List<String> reintentos = new ArrayList<>();
 
-    private final Ports.TenantTransaction transaccion = new Ports.TenantTransaction() {
+    private final TenantTransaction transaccion = new TenantTransaction() {
         @Override
         public <T> T execute(UUID tenantId, Supplier<T> work) {
             tenantsUsados.add(tenantId);
@@ -43,7 +45,7 @@ class TechnicianEventsHandlerTests {
     };
 
     /** Misma regla que el SQL: crea la fila o la reemplaza solo si el evento es más reciente. */
-    private final Ports.TechnicianProjection proyectar = snapshot -> {
+    private final TechnicianProjection proyectar = snapshot -> {
         var actual = proyeccion.get(snapshot.technicianId());
         if (actual != null && !actual.updatedAt().isBefore(snapshot.updatedAt())) {
             return false;
