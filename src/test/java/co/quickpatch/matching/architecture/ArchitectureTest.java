@@ -7,6 +7,8 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Reglas de dependencia entre capas de SDD 10.3.2 (SCRUM-648) aplicadas a Matching. Revisan lo que el compilador
@@ -53,5 +55,12 @@ class ArchitectureTest {
     @Test
     void losPaquetesDeApplicationNoFormanCiclos() {
         slices().matching(BASE + ".application.(*)..").should().beFreeOfCycles().check(CLASES);
+    }
+
+    // SDD 10.3.2 (SCRUM-712): la misma regla en las otras tres capas, como en los servicios .NET.
+    @ParameterizedTest
+    @ValueSource(strings = {"domain", "infrastructure", "api"})
+    void losPaquetesDeCadaCapaNoFormanCiclos(String capa) {
+        slices().matching(BASE + "." + capa + ".(*)..").should().beFreeOfCycles().check(CLASES);
     }
 }
